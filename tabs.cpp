@@ -83,12 +83,13 @@ std::string GetProcessName(DWORD processId)
     return "Unknown";
 }
 
-// Global variables for enumeration
-std::vector<WindowInfo>* g_windows = nullptr;
-IVirtualDesktopManager* g_vdm = nullptr;
-
 // Callback function for EnumWindows
-BOOL CALLBACK EnumWindowsForDesktopProc(HWND hwnd, LPARAM lParam)
+BOOL CALLBACK EnumWindowsForDesktopProc(
+    HWND hwnd,
+    LPARAM lParam,
+    IVirtualDesktopManager* vdm,
+    std::vector<WindowInfo>* g_windows
+)
 {
     if (IsAltTabWindow(hwnd))
     {
@@ -110,13 +111,13 @@ BOOL CALLBACK EnumWindowsForDesktopProc(HWND hwnd, LPARAM lParam)
 
         // Check if window is on current virtual desktop
         info.isOnCurrentDesktop = false;
-        if (g_vdm)
+        if (vdm)
         {
             BOOL onCurrentDesktop = FALSE;
-            HRESULT hr = g_vdm->IsWindowOnCurrentVirtualDesktop(hwnd, &onCurrentDesktop);
+            HRESULT hr = vdm->IsWindowOnCurrentVirtualDesktop(hwnd, &onCurrentDesktop);
             if (SUCCEEDED(hr))
             {
-                info.isOnCurrentDesktop = (onCurrentDesktop == TRUE);
+                info.isOnCurrentDesktop = onCurrentDesktop == TRUE;
             }
         }
 
@@ -192,15 +193,23 @@ std::vector<WindowInfo> ListWindowsByDesktop(bool currentDesktopOnly = true)
         currentDesktopOnly = false;
     }
 
+
+    struct EnumContext {
+        IVirtualDesktopManager* vdm;
+        std::vector<WindowInfo>* windows;
+    };
+
     std::vector<WindowInfo> windows;
-    g_windows = &windows;
-    g_vdm = vdm.Get();
+    IVirtualDesktopManager* g_vdm = vdm.Get();
+
+    EnumContext context = { g_vdm, &windows };
 
     // Enumerate all windows
-    EnumWindows(EnumWindowsForDesktopProc, 0);
-
-    // Clear global pointer before COM cleanup
-    g_vdm = nullptr;
+    EnumWindows([](const HWND hwnd, const LPARAM lParam) -> BOOL
+    {
+        const auto ctx = reinterpret_cast<EnumContext*>(lParam);
+        return EnumWindowsForDesktopProc(hwnd, 0, ctx->vdm, ctx->windows);
+    }, reinterpret_cast<LPARAM>(&context));
 
     // Filter and display results
     std::vector<WindowInfo> currentDesktopWindows;
@@ -220,15 +229,15 @@ std::vector<WindowInfo> ListWindowsByDesktop(bool currentDesktopOnly = true)
 
     print_windows(currentDesktopOnly, currentDesktopWindows, otherDesktopWindows);
 
-    // Cleanup - let ComPtr handle the release automatically, then uninitialize COM
+    // let ComPtr handle the release automatically, then uninitialize COM
     vdm.Reset(); // Explicitly release the COM object
     CoUninitialize();
 
-    return currentDesktopWindows;
+    return otherDesktopWindows;
 }
 
 // Function to get desktop GUID for a window
-void ShowWindowDesktopInfo(HWND hwnd)
+void ShowWindowDesktopInfo(const HWND hwnd)
 {
     HRESULT hr = CoInitialize(NULL);
     if (FAILED(hr)) return;

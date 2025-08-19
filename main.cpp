@@ -17,61 +17,57 @@ T* safeGet(std::vector<T>& vec, size_t idx)
     return idx < vec.size() ? &vec[idx] : nullptr;
 }
 
-void handle_sht1()
+void handle_sht1(std::vector<WindowInfo>* windows)
 {
-    auto windows = ListWindowsByDesktop(true);
-    if (windows.empty())
+    if (windows->empty())
     {
-        std::cout << "No windows found " << windows.size() << std::endl;
+        std::cout << "No windows found " << windows->size() << std::endl;
         return;
     }
 
-    if (const auto win = safeGet(windows, 1))
+    if (const auto win = safeGet(*windows, 0))
     {
         BringWindowToFront(win->hwnd);
     }
 }
 
-void handle_sht2()
+void handle_sht2(std::vector<WindowInfo>* windows)
 {
-    auto windows = ListWindowsByDesktop(true);
-    if (windows.empty())
+    if (windows->empty())
     {
-        std::cout << "No windows found " << windows.size() << std::endl;
+        std::cout << "No windows found " << windows->size() << std::endl;
         return;
     }
 
-    if (const auto win = safeGet(windows, 2))
+    if (const auto win = safeGet(*windows, 2 - 1))
     {
         BringWindowToFront(win->hwnd);
     }
 }
 
-void handle_sht3()
+void handle_sht3(std::vector<WindowInfo>* windows)
 {
-    auto windows = ListWindowsByDesktop(true);
-    if (windows.empty())
+    if (windows->empty())
     {
-        std::cout << "No windows found " << windows.size() << std::endl;
+        std::cout << "No windows found " << windows->size() << std::endl;
         return;
     }
 
-    if (const auto win = safeGet(windows, 3))
+    if (const auto win = safeGet(*windows, 3 - 1))
     {
         BringWindowToFront(win->hwnd);
     }
 }
 
-void handle_sht4()
+void handle_sht4(std::vector<WindowInfo>* windows)
 {
-    auto windows = ListWindowsByDesktop(true);
-    if (windows.empty())
+    if (windows->empty())
     {
-        std::cout << "No windows found " << windows.size() << std::endl;
+        std::cout << "No windows found " << windows->size() << std::endl;
         return;
     }
 
-    if (const auto win = safeGet(windows, 4))
+    if (const auto win = safeGet(*windows, 4 - 1))
     {
         BringWindowToFront(win->hwnd);
     }
@@ -82,41 +78,45 @@ struct ShortcutConfig
 {
     int KeyModifiers;
     int TriggerKey;
-    void (*callback)();
+    void (*callback)(std::vector<WindowInfo>* desktops);
 };
 
+std::vector<WindowInfo> availableWindows;
 
 const std::map<UINT, ShortcutConfig> shortcuts = {
     {
-        69, {
+        69, ShortcutConfig{
             MOD_WIN | MOD_SHIFT,
             VK_TAB,
-            launch_gui
+            [](std::vector<WindowInfo>* desktops)
+            {
+                availableWindows = launch_gui(*desktops);
+            }
         },
     },
     {
-        1, {
+        1, ShortcutConfig{
             MOD_CONTROL,
             '1',
             handle_sht1
         },
     },
     {
-        2, {
+        2, ShortcutConfig{
             MOD_CONTROL,
             '2',
             handle_sht2
         },
     },
     {
-        3, {
+        3, ShortcutConfig{
             MOD_CONTROL,
             '3',
             handle_sht3
         },
     },
     {
-        4, {
+        4, ShortcutConfig{
             MOD_CONTROL,
             '4',
             handle_sht4
@@ -153,10 +153,8 @@ void UnregisterGlobalHotkey()
     }
 }
 
-void MessageLoop()
+void MessageLoop(std::vector<WindowInfo>* desktops)
 {
-    std::cout << "Listening for CTRL+1" << std::endl;
-
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0))
     {
@@ -165,7 +163,7 @@ void MessageLoop()
             auto item = shortcuts.find(msg.wParam);
             if (item != shortcuts.end())
             {
-                item->second.callback();
+                item->second.callback(desktops);
             }
             else
             {
@@ -188,10 +186,11 @@ int main()
 {
     std::cout << "FindMyTabs\n";
     std::cout << "==================================\n\n";
+    availableWindows = ListWindowsByDesktop(true);
 
     if (RegisterGlobalHotkey())
     {
-        MessageLoop();
+        MessageLoop(&availableWindows);
         UnregisterGlobalHotkey();
     }
 

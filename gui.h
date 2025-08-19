@@ -1,10 +1,8 @@
-//
-// Created by razer on 19-Aug-25.
-//
-
 #ifndef FINDMYTABS_GUI_H
 #define FINDMYTABS_GUI_H
 
+#include "tabs.h"
+
 #endif //FINDMYTABS_GUI_H
 
-void launch_gui();
+std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops);
