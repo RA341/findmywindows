@@ -10,6 +10,7 @@ struct WindowInfo
     HWND hwnd;
     std::string title;
     std::string className;
+    std::string processName = "";
     DWORD processId;
     bool isOnCurrentDesktop;
 };

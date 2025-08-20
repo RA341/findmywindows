@@ -48,7 +48,7 @@ bool IsAltTabWindow(HWND hwnd)
     }
 
     HWND owner = GetWindow(hwnd, GW_OWNER);
-    if (!(exStyle & WS_EX_APPWINDOW) && owner != NULL)
+    if (!(exStyle & WS_EX_APPWINDOW) && owner != nullptr)
     {
         return false;
     }
@@ -67,13 +67,13 @@ bool IsAltTabWindow(HWND hwnd)
 }
 
 // Get process name from process ID
-std::string GetProcessName(DWORD processId)
+std::string GetProcessName(const DWORD processId)
 {
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+    const HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
     if (hProcess)
     {
         char processName[MAX_PATH];
-        if (GetModuleBaseNameA(hProcess, NULL, processName, sizeof(processName)))
+        if (GetModuleBaseNameA(hProcess, nullptr, processName, sizeof(processName)))
         {
             CloseHandle(hProcess);
             return std::string(processName);
@@ -121,14 +121,18 @@ BOOL CALLBACK EnumWindowsForDesktopProc(
             }
         }
 
+        info.processName = GetProcessName(info.processId);
         g_windows->push_back(info);
     }
 
     return TRUE;
 }
 
-void print_windows(bool currentDesktopOnly, std::vector<WindowInfo> currentDesktopWindows,
-                   std::vector<WindowInfo> otherDesktopWindows)
+void print_windows(
+    const bool currentDesktopOnly,
+    const std::vector<WindowInfo>& currentDesktopWindows,
+    const std::vector<WindowInfo>& otherDesktopWindows
+)
 {
     if (currentDesktopOnly)
     {
@@ -183,7 +187,7 @@ std::vector<WindowInfo> ListWindowsByDesktop(bool currentDesktopOnly = true)
 
     // Create Virtual Desktop Manager
     ComPtr<IVirtualDesktopManager> vdm;
-    hr = CoCreateInstance(CLSID_VirtualDesktopManager, NULL, CLSCTX_ALL,
+    hr = CoCreateInstance(CLSID_VirtualDesktopManager, nullptr, CLSCTX_ALL,
                           IID_IVirtualDesktopManager, &vdm);
 
     if (FAILED(hr))
@@ -194,7 +198,8 @@ std::vector<WindowInfo> ListWindowsByDesktop(bool currentDesktopOnly = true)
     }
 
 
-    struct EnumContext {
+    struct EnumContext
+    {
         IVirtualDesktopManager* vdm;
         std::vector<WindowInfo>* windows;
     };
@@ -202,7 +207,7 @@ std::vector<WindowInfo> ListWindowsByDesktop(bool currentDesktopOnly = true)
     std::vector<WindowInfo> windows;
     IVirtualDesktopManager* g_vdm = vdm.Get();
 
-    EnumContext context = { g_vdm, &windows };
+    EnumContext context = {g_vdm, &windows};
 
     // Enumerate all windows
     EnumWindows([](const HWND hwnd, const LPARAM lParam) -> BOOL
@@ -239,11 +244,11 @@ std::vector<WindowInfo> ListWindowsByDesktop(bool currentDesktopOnly = true)
 // Function to get desktop GUID for a window
 void ShowWindowDesktopInfo(const HWND hwnd)
 {
-    HRESULT hr = CoInitialize(NULL);
+    HRESULT hr = CoInitialize(nullptr);
     if (FAILED(hr)) return;
 
     ComPtr<IVirtualDesktopManager> vdm;
-    hr = CoCreateInstance(CLSID_VirtualDesktopManager, NULL, CLSCTX_ALL,
+    hr = CoCreateInstance(CLSID_VirtualDesktopManager, nullptr, CLSCTX_ALL,
                           IID_IVirtualDesktopManager, &vdm);
 
     if (SUCCEEDED(hr))

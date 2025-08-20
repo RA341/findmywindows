@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <windows.h>
@@ -7,6 +8,7 @@
 #include <shobjidl.h>
 #include <wrl/client.h>
 
+#include "file.h"
 #include "gui.h"
 #include "tabs.h"
 
@@ -81,7 +83,16 @@ struct ShortcutConfig
     void (*callback)(std::vector<WindowInfo>* desktops);
 };
 
+const std::string FIND_MY_WIN_CONFIG = "findmywindows.txt";
+
 std::vector<WindowInfo> availableWindows;
+
+std::string transform(WindowInfo win)
+{
+    return win.processName;
+}
+
+constexpr auto trigger = MOD_CONTROL;
 
 const std::map<UINT, ShortcutConfig> shortcuts = {
     {
@@ -91,33 +102,41 @@ const std::map<UINT, ShortcutConfig> shortcuts = {
             [](std::vector<WindowInfo>* desktops)
             {
                 availableWindows = launch_gui(*desktops);
+                std::vector<std::string> process_id_list;
+
+                std::ranges::transform(
+                    availableWindows,
+                    std::back_inserter(process_id_list), transform
+                );
+
+                write_strings_to_file(FIND_MY_WIN_CONFIG, process_id_list);
             }
         },
     },
     {
         1, ShortcutConfig{
-            MOD_CONTROL,
+            trigger,
             '1',
             handle_sht1
         },
     },
     {
         2, ShortcutConfig{
-            MOD_CONTROL,
+            trigger,
             '2',
             handle_sht2
         },
     },
     {
         3, ShortcutConfig{
-            MOD_CONTROL,
+            trigger,
             '3',
             handle_sht3
         },
     },
     {
         4, ShortcutConfig{
-            MOD_CONTROL,
+            trigger,
             '4',
             handle_sht4
         },
@@ -153,17 +172,20 @@ void UnregisterGlobalHotkey()
     }
 }
 
-void MessageLoop(std::vector<WindowInfo>* desktops)
+void load_window_list();
+
+void MessageLoop()
 {
     MSG msg;
     while (GetMessage(&msg, nullptr, 0, 0))
     {
+        load_window_list();
         if (msg.message == WM_HOTKEY)
         {
             auto item = shortcuts.find(msg.wParam);
             if (item != shortcuts.end())
             {
-                item->second.callback(desktops);
+                item->second.callback(&availableWindows);
             }
             else
             {
@@ -182,15 +204,54 @@ void MessageLoop(std::vector<WindowInfo>* desktops)
 }
 
 
+void load_window_list()
+{
+    std::vector<WindowInfo> orderedWindows;
+
+    std::vector<WindowInfo> initialWindows = ListWindowsByDesktop(true);
+    const std::vector<std::string> saved_process = read_strings_from_file(FIND_MY_WIN_CONFIG);
+
+    std::vector<WindowInfo> finalWindowList;
+    finalWindowList.reserve(initialWindows.size());
+
+    // Iterate through the desired process order.
+    for (const auto& process_name : saved_process)
+    {
+        // Find the window corresponding to the saved process name.
+        auto it = std::ranges::find_if(
+            initialWindows,
+            [&](const WindowInfo& window)
+            {
+                return window.processName == process_name;
+            });
+
+        // If the window was found in the available list...
+        if (it != initialWindows.end())
+        {
+            // move it to our final list and erase it from the original
+            // to mark it as "processed".
+            finalWindowList.push_back(std::move(*it));
+            initialWindows.erase(it);
+        }
+    }
+
+    finalWindowList.insert(
+        finalWindowList.end(),
+        std::make_move_iterator(initialWindows.begin()),
+        std::make_move_iterator(initialWindows.end())
+    );
+
+    availableWindows = finalWindowList;
+}
+
 int main()
 {
     std::cout << "FindMyTabs\n";
     std::cout << "==================================\n\n";
-    availableWindows = ListWindowsByDesktop(true);
 
     if (RegisterGlobalHotkey())
     {
-        MessageLoop(&availableWindows);
+        MessageLoop();
         UnregisterGlobalHotkey();
     }
 
