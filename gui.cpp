@@ -9,6 +9,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "tabs.h"
+#include "icon.h"
 
 const auto windowTitle = "Find My Windows";
 
@@ -38,6 +39,12 @@ bool setup_window(GLFWwindow*& window)
     }
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
+
+    GLFWimage icon;
+    icon.width = 32; // Match your export size
+    icon.height = 44; // Match your export size
+    icon.pixels = static_cast<unsigned char*>(icon_rgba);
+    glfwSetWindowIcon(window, 1, &icon);
 
     // Initialize GLAD
     if (!gladLoadGL())

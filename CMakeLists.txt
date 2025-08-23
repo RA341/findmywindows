@@ -26,6 +26,10 @@ target_link_libraries(findmywindows PRIVATE
 # 1. INSTALLATION RULES
 #-------------------------------------------------------------------
 
+set_target_properties(findmywindows PROPERTIES
+        WIN32_EXECUTABLE $<CONFIG:Release>
+)
+
 # This command specifies that the final executable 'findmywindows.exe'
 # should be installed into a 'bin' directory inside the final installation folder.
 install(TARGETS findmywindows
