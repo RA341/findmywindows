@@ -3,6 +3,7 @@
 #include <map>
 #include <windows.h>
 #include <psapi.h>
+#include <ranges>
 #include <vector>
 #include <string>
 #include <shobjidl.h>
@@ -19,7 +20,7 @@ T* safeGet(std::vector<T>& vec, size_t idx)
     return idx < vec.size() ? &vec[idx] : nullptr;
 }
 
-void handle_sht1(std::vector<WindowInfo>* windows)
+void handle_sht(std::vector<WindowInfo>* windows, int trigger_key)
 {
     if (windows->empty())
     {
@@ -27,86 +28,44 @@ void handle_sht1(std::vector<WindowInfo>* windows)
         return;
     }
 
-    if (const auto win = safeGet(*windows, 0))
+    if (const auto win = safeGet(*windows, trigger_key - 1))
     {
         BringWindowToFront(win->hwnd);
     }
 }
-
-void handle_sht2(std::vector<WindowInfo>* windows)
-{
-    if (windows->empty())
-    {
-        std::cout << "No windows found " << windows->size() << std::endl;
-        return;
-    }
-
-    if (const auto win = safeGet(*windows, 2 - 1))
-    {
-        BringWindowToFront(win->hwnd);
-    }
-}
-
-void handle_sht3(std::vector<WindowInfo>* windows)
-{
-    if (windows->empty())
-    {
-        std::cout << "No windows found " << windows->size() << std::endl;
-        return;
-    }
-
-    if (const auto win = safeGet(*windows, 3 - 1))
-    {
-        BringWindowToFront(win->hwnd);
-    }
-}
-
-void handle_sht4(std::vector<WindowInfo>* windows)
-{
-    if (windows->empty())
-    {
-        std::cout << "No windows found " << windows->size() << std::endl;
-        return;
-    }
-
-    if (const auto win = safeGet(*windows, 4 - 1))
-    {
-        BringWindowToFront(win->hwnd);
-    }
-}
-
 
 struct ShortcutConfig
 {
     int KeyModifiers;
     int TriggerKey;
-    void (*callback)(std::vector<WindowInfo>* desktops);
+    void (*callback)(std::vector<WindowInfo>* desktops, int triggerKey);
 };
 
 const std::string FIND_MY_WIN_CONFIG = "findmywindows.txt";
 
 std::vector<WindowInfo> availableWindows;
 
-std::string transform(WindowInfo win)
+std::string transform(const WindowInfo& win)
 {
     return win.processName;
 }
 
 constexpr auto trigger = MOD_CONTROL;
 
-const std::map<UINT, ShortcutConfig> shortcuts = {
+const std::map<INT, ShortcutConfig> shortcuts = {
     {
         69, ShortcutConfig{
             MOD_WIN | MOD_SHIFT,
             VK_TAB,
-            [](std::vector<WindowInfo>* desktops)
+            [](std::vector<WindowInfo>* desktops, int)
             {
                 availableWindows = launch_gui(*desktops);
                 std::vector<std::string> process_id_list;
 
                 std::ranges::transform(
-                    availableWindows,
-                    std::back_inserter(process_id_list), transform
+                    availableWindows | std::views::take(shortcuts.size() - 1),
+                    std::back_inserter(process_id_list),
+                    transform
                 );
 
                 write_strings_to_file(FIND_MY_WIN_CONFIG, process_id_list);
@@ -117,28 +76,49 @@ const std::map<UINT, ShortcutConfig> shortcuts = {
         1, ShortcutConfig{
             trigger,
             '1',
-            handle_sht1
+            handle_sht
         },
     },
     {
         2, ShortcutConfig{
             trigger,
             '2',
-            handle_sht2
+            handle_sht
         },
     },
     {
         3, ShortcutConfig{
             trigger,
             '3',
-            handle_sht3
+            handle_sht
         },
     },
     {
         4, ShortcutConfig{
             trigger,
             '4',
-            handle_sht4
+            handle_sht
+        },
+    },
+    {
+        5, ShortcutConfig{
+            trigger,
+            '5',
+            handle_sht
+        },
+    },
+    {
+        6, ShortcutConfig{
+            trigger,
+            '6',
+            handle_sht
+        },
+    },
+    {
+        7, ShortcutConfig{
+            trigger,
+            '7',
+            handle_sht
         },
     },
 };
@@ -185,7 +165,7 @@ void MessageLoop()
             auto item = shortcuts.find(msg.wParam);
             if (item != shortcuts.end())
             {
-                item->second.callback(&availableWindows);
+                item->second.callback(&availableWindows, item->first);
             }
             else
             {

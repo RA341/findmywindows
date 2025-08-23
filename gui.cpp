@@ -59,7 +59,7 @@ bool setup_window(GLFWwindow*& window)
     const ImGuiIO& io = ImGui::GetIO();
     (void)io;
 
-    io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeui.ttf", 24.0f);
+    io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/verdana.ttf", 20.0f, nullptr, io.Fonts->GetGlyphRangesDefault());
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
@@ -88,8 +88,12 @@ void render(GLFWwindow* window, const ImVec4 clear_color)
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
     glViewport(0, 0, display_w, display_h);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w,
-                 clear_color.w);
+    glClearColor(
+        clear_color.x * clear_color.w,
+        clear_color.y * clear_color.w,
+        clear_color.z * clear_color.w,
+        clear_color.w
+    );
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -104,7 +108,62 @@ std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops)
         return {};
     }
 
-    constexpr auto clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    // Enhanced color scheme - Grey primary, Red secondary
+    constexpr auto clear_color = ImVec4(0.15f, 0.15f, 0.18f, 1.00f); // Dark grey background
+
+    // Set up custom ImGui style
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    // Primary colors (Grey tones)
+    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.12f, 0.12f, 0.15f, 0.95f); // Dark grey window background
+    style.Colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.10f, 0.12f, 0.90f); // Darker grey for child windows
+    style.Colors[ImGuiCol_PopupBg] = ImVec4(0.12f, 0.12f, 0.15f, 0.98f); // Popup background
+    style.Colors[ImGuiCol_Border] = ImVec4(0.25f, 0.25f, 0.28f, 0.80f); // Light grey borders
+    style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f); // No shadow
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.18f, 0.18f, 0.22f, 0.85f); // Frame background
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.22f, 0.22f, 0.26f, 0.90f); // Frame hover
+    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.26f, 0.30f, 0.95f); // Frame active
+
+    // Secondary colors (Red accents)
+    style.Colors[ImGuiCol_Header] = ImVec4(0.65f, 0.20f, 0.20f, 0.70f); // Red header
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.75f, 0.25f, 0.25f, 0.80f); // Red header hover
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.85f, 0.30f, 0.30f, 0.90f); // Red header active
+    style.Colors[ImGuiCol_Button] = ImVec4(0.55f, 0.18f, 0.18f, 0.65f); // Red button
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.65f, 0.22f, 0.22f, 0.75f); // Red button hover
+    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.75f, 0.26f, 0.26f, 0.85f); // Red button active
+
+    // Selection colors (Red theme)
+    style.Colors[ImGuiCol_CheckMark] = ImVec4(0.85f, 0.30f, 0.30f, 1.00f); // Red checkmark
+    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.75f, 0.25f, 0.25f, 0.85f); // Red slider
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.85f, 0.30f, 0.30f, 0.95f); // Red slider active
+
+    // Text colors
+    style.Colors[ImGuiCol_Text] = ImVec4(0.92f, 0.92f, 0.94f, 1.00f); // Light grey text
+    style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.52f, 1.00f); // Disabled text
+    style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.65f, 0.20f, 0.20f, 0.35f); // Red text selection
+
+    // Separator and resize grip
+    style.Colors[ImGuiCol_Separator] = ImVec4(0.35f, 0.35f, 0.38f, 0.60f); // Grey separator
+    style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.75f, 0.25f, 0.25f, 0.80f); // Red separator hover
+    style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.85f, 0.30f, 0.30f, 1.00f); // Red separator active
+    style.Colors[ImGuiCol_ResizeGrip] = ImVec4(0.65f, 0.20f, 0.20f, 0.25f); // Red resize grip
+    style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.75f, 0.25f, 0.25f, 0.67f); // Red resize grip hover
+    style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.85f, 0.30f, 0.30f, 0.95f); // Red resize grip active
+
+    // Enhanced styling parameters
+    style.WindowRounding = 6.0f; // Rounded corners
+    style.FrameRounding = 4.0f; // Rounded frames
+    style.PopupRounding = 4.0f; // Rounded popups
+    style.ScrollbarRounding = 4.0f; // Rounded scrollbars
+    style.GrabRounding = 4.0f; // Rounded grab handles
+    style.TabRounding = 4.0f; // Rounded tabs
+    style.WindowBorderSize = 1.0f; // Thin borders
+    style.FrameBorderSize = 1.0f; // Frame borders
+    style.PopupBorderSize = 1.0f; // Popup borders
+    style.WindowPadding = ImVec2(12.0f, 12.0f); // More padding
+    style.FramePadding = ImVec2(8.0f, 4.0f); // Frame padding
+    style.ItemSpacing = ImVec2(8.0f, 6.0f); // Item spacing
+    style.ItemInnerSpacing = ImVec2(6.0f, 4.0f); // Inner spacing
 
     // Remove windows with matching title
     for (auto const& [index, value] : std::views::enumerate(desktops))
@@ -115,9 +174,9 @@ std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops)
         }
     }
 
-    static int selectedIndex = 0; // Start with first item selected
-    static bool focusListBox = true; // Start with focus on list
-    static bool set_initial_focus = true; // Renamed for clarity
+    static int selectedIndex = 0;
+    static bool focusListBox = true;
+    static bool set_initial_focus = true;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -145,12 +204,41 @@ std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops)
             ImGuiWindowFlags_NoMove
         );
 
-
-        // Display instructions
+        // Styled separator
+        ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.65f, 0.20f, 0.20f, 0.60f));
         ImGui::Separator();
-        ImGui::Text("Current windows");
-        ImGui::SameLine(0, 5);
-        ImGui::Text("Up/Down to select, ESC to close");
+        ImGui::PopStyleColor();
+
+        ImGui::Spacing();
+
+        // Enhanced instruction panel with better formatting
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.08f, 0.08f, 0.10f, 0.85f));
+        ImGui::BeginChild("Instructions", ImVec2(0, 80), true, ImGuiWindowFlags_NoScrollbar);
+
+        const auto appname = "Find My Windows";
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.30f, 0.30f, 1.00f)); // Red title
+        ImGui::SetCursorPosX((ImGui::GetWindowSize().x - ImGui::CalcTextSize(appname).x) * 0.5f);
+        ImGui::Text(appname);
+        ImGui::PopStyleColor();
+
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.75f, 0.75f, 0.77f, 1.00f));
+        const auto instructions = {"TAB to Close", "^/v Navigate", "ALT+^/v Reorder"};
+
+        auto offset = 0;
+        for (const auto ins : instructions)
+        {
+            ImGui::Text(ins);
+            offset += 150;
+            ImGui::SameLine(offset);
+        }
+        ImGui::PopStyleColor();
+
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+
+        ImGui::Spacing();
+
+        constexpr auto max_shortcuts = 9;
 
         if (!desktops.empty())
         {
@@ -161,7 +249,7 @@ std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops)
 
             const ImGuiIO& io = ImGui::GetIO();
 
-            if (ImGui::IsKeyPressed(ImGuiKey_Escape))
+            if (ImGui::IsKeyPressed(ImGuiKey_Tab))
             {
                 glfwSetWindowShouldClose(window, GL_TRUE);
             }
@@ -196,9 +284,11 @@ std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops)
         if (focusListBox)
         {
             ImGui::SetNextItemOpen(true);
-            focusListBox = false; // Only set focus once
+            focusListBox = false;
         }
 
+        // Enhanced list box with custom styling
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f, 8.0f));
         if (ImGui::BeginListBox("##desktops", ImVec2(-1, -1)))
         {
             for (int i = 0; i < static_cast<int>(desktops.size()); i++)
@@ -206,51 +296,32 @@ std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops)
                 const bool isSelected = selectedIndex == i;
 
                 std::string label;
-                if (i < 4)
+                std::string shortcut;
+                if (i < max_shortcuts)
                 {
-                    label = std::format("CTRL {} = {}", i + 1, desktops[i].title);
+                    shortcut = std::format("CTRL {}", i + 1);
+                    label = desktops[i].title;
                 }
                 else
                 {
-                    label = std::format("{}", desktops[i].title);
+                    label = desktops[i].title;
                 }
 
-                // Custom selectable with right-aligned help text
+                std::string fullLabel = shortcut.empty() ? label : std::format("[{}] {}", shortcut, label);
                 if (isSelected)
                 {
-                    // Get available width
-                    float availableWidth = ImGui::GetContentRegionAvail().x;
-
-                    // Measure text widths
-                    const auto helpText = "Alt + Up/Down to reorder";
-                    const float helpWidth = ImGui::CalcTextSize(helpText).x;
-                    const float titleWidth = ImGui::CalcTextSize(label.c_str()).x;
-
-                    // Calculate spacing needed to right-align help text
-                    const float spacing = availableWidth - titleWidth - helpWidth - ImGui::GetStyle().ItemSpacing.x;
-
-                    // Create the selectable item
                     if (ImGui::Selectable("##hidden", isSelected))
                     {
                         selectedIndex = i;
                     }
 
-                    // Draw the title and help text on the same line as the selectable
                     ImGui::SameLine(ImGui::GetStyle().ItemInnerSpacing.x);
-                    ImGui::Text("%s", label.c_str());
-
-                    if (spacing > 0)
-                    {
-                        ImGui::SameLine(ImGui::GetStyle().ItemInnerSpacing.x + titleWidth + spacing);
-                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 0.0f, 1.0f)); // Yellow text
-                        ImGui::Text("%s", helpText);
-                        ImGui::PopStyleColor();
-                    }
+                    ImGui::Text("%s", fullLabel.c_str());
                 }
                 else
                 {
                     // Regular selectable for non-selected items
-                    if (ImGui::Selectable(label.c_str(), isSelected))
+                    if (ImGui::Selectable(fullLabel.c_str(), isSelected))
                     {
                         selectedIndex = i;
                     }
@@ -265,6 +336,7 @@ std::vector<WindowInfo> launch_gui(std::vector<WindowInfo> desktops)
 
             ImGui::EndListBox();
         }
+        ImGui::PopStyleVar();
 
         ImGui::End();
 
